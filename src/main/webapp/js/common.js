@@ -21,7 +21,7 @@
  * @author <a href="http://vanessa.b3log.org">Liyuan Li</a>
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
  * @author <a href="http://zephyr.b3log.org">Zephyr</a>
- * @version 1.47.0.2, Mar 17, 2019
+ * @version 1.47.0.4, Aug 6, 2019
  */
 
 /**
@@ -101,11 +101,11 @@ var Util = {
     }
   },
   parseHljs: function () {
-    Util.addStyle('https://cdn.jsdelivr.net/npm/vditor@1.3.3/dist/js/highlight.js@9.15.6/styles/github.css', 'vditorHljsStyle')
+    Util.addStyle('https://cdn.jsdelivr.net/npm/vditor/dist/js/highlight.js/styles/github.css', 'vditorHljsStyle')
     if (!Label.markdownHttpAvailable) {
       if (typeof hljs === 'undefined') {
         $.ajax({
-          url: 'https://cdn.jsdelivr.net/npm/vditor@1.3.3/dist/js/highlight.js@9.15.6/highlight.pack.js',
+          url: 'https://cdn.jsdelivr.net/npm/vditor/dist/js/highlight.js/highlight.pack.js',
           dataType: 'script',
           cache: true,
           success: function () {
@@ -125,6 +125,7 @@ var Util = {
    */
   parseMarkdown: function () {
     Vditor.mermaidRender(document.body)
+    Vditor.chartRender()
     Vditor.mathRender(document.body)
     Vditor.codeRender(document.body, Label.langLabel)
 
@@ -644,7 +645,7 @@ var Util = {
       input: data.input,
       preview: {
         delay: 500,
-        show: data.preview.show,
+        mode: data.preview.mode,
         url: Label.servePath + '/markdown',
         parse: function (element) {
           if (element.style.display === 'none') {
@@ -725,6 +726,7 @@ var Util = {
         'table',
         'record',
         '|',
+        'both',
         'preview',
         'info',
         'help',

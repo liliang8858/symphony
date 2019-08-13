@@ -119,7 +119,8 @@ import java.util.*;
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
  * @author Bill Ho
  * @author <a href="http://vanessa.b3log.org">Liyuan Li</a>
- * @version 2.30.1.2, May 12, 2019
+ * @author <a href="https://qiankunpingtai.cn">qiankunpingtai</a>
+ * @version 2.30.1.4, May 20, 2019
  * @since 1.1.0
  */
 @RequestProcessor
@@ -1063,7 +1064,7 @@ public class AdminProcessor {
         final String articleContent = context.param(Article.ARTICLE_CONTENT);
         String rewardContent = context.param(Article.ARTICLE_REWARD_CONTENT);
         final String rewardPoint = context.param(Article.ARTICLE_REWARD_POINT);
-
+        final int articleShowInList = Article.ARTICLE_SHOW_IN_LIST_C_YES;
         long time = System.currentTimeMillis();
 
         try {
@@ -1084,7 +1085,7 @@ public class AdminProcessor {
         article.put(Article.ARTICLE_REWARD_POINT, Integer.valueOf(rewardPoint));
         article.put(User.USER_NAME, userName);
         article.put(Common.TIME, time);
-
+        article.put(Article.ARTICLE_SHOW_IN_LIST, articleShowInList);
         try {
             final String articleId = articleMgmtService.addArticleByAdmin(article);
             operationMgmtService.addOperation(Operation.newOperation(request, Operation.OPERATION_CODE_C_ADD_ARTICLE, articleId));
@@ -1904,7 +1905,6 @@ public class AdminProcessor {
         while (parameterNames.hasMoreElements()) {
             final String name = parameterNames.nextElement();
             final String value = context.param(name);
-
             if (name.equals(Article.ARTICLE_REWARD_POINT)
                     || name.equals(Article.ARTICLE_QNA_OFFER_POINT)
                     || name.equals(Article.ARTICLE_STATUS)
@@ -1914,7 +1914,8 @@ public class AdminProcessor {
                     || name.equals(Article.ARTICLE_BAD_CNT)
                     || name.equals(Article.ARTICLE_PERFECT)
                     || name.equals(Article.ARTICLE_ANONYMOUS_VIEW)
-                    || name.equals(Article.ARTICLE_PUSH_ORDER)) {
+                    || name.equals(Article.ARTICLE_PUSH_ORDER)
+                    || name.equals(Article.ARTICLE_SHOW_IN_LIST)) {
                 article.put(name, Integer.valueOf(value));
             } else {
                 article.put(name, value);

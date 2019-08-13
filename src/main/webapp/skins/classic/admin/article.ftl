@@ -208,6 +208,13 @@
                         <div>${qnaOfferPointLabel}</div>
                         <input type="text" name="articleQnAOfferPoint" value="${article.articleQnAOfferPoint?c}"/>
                     </label>
+                    <label class="mid">
+                        <div>${showInListLabel}</div>
+                        <select id="articleShowInList" name="articleShowInList">
+                            <option value="1"<#if 1==article.articleShowInList> selected</#if>>${yesLabel}</option>
+                            <option value="0"<#if 0==article.articleShowInList> selected</#if>>${noLabel}</option>
+                        </select>
+                    </label>
                 </div>
                 <br/>
                 <button type="submit" class="green fn-right">${submitLabel}</button>

@@ -83,7 +83,8 @@ import java.util.*;
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
  * @author <a href="http://zephyr.b3log.org">Zephyr</a>
- * @version 1.27.3.1, Apr 9, 2019
+ * @author <a href="https://qiankunpingtai.cn">qiankunpingtai</a>
+ * @version 1.27.3.4, May 26, 2019
  * @since 0.2.0
  */
 @RequestProcessor
@@ -608,8 +609,8 @@ public class ArticleProcessor {
 
         dataModelService.fillHeaderAndFooter(context, dataModel);
 
-        final String authorId = article.optString(Article.ARTICLE_AUTHOR_ID);
-        final JSONObject author = userQueryService.getUser(authorId);
+        final String articleAuthorId = article.optString(Article.ARTICLE_AUTHOR_ID);
+        final JSONObject author = userQueryService.getUser(articleAuthorId);
         Escapes.escapeHTML(author);
 
         if (Article.ARTICLE_ANONYMOUS_C_PUBLIC == article.optInt(Article.ARTICLE_ANONYMOUS)) {
@@ -638,7 +639,8 @@ public class ArticleProcessor {
         if (isLoggedIn) {
             currentUser = Sessions.getUser();
             currentUserId = currentUser.optString(Keys.OBJECT_ID);
-            article.put(Common.IS_MY_ARTICLE, currentUserId.equals(article.optString(Article.ARTICLE_AUTHOR_ID)));
+            final boolean isMyArticle = currentUserId.equals(articleAuthorId);
+            article.put(Common.IS_MY_ARTICLE, isMyArticle);
 
             final boolean isFollowing = followQueryService.isFollowing(currentUserId, articleId, Follow.FOLLOWING_TYPE_C_ARTICLE);
             dataModel.put(Common.IS_FOLLOWING, isFollowing);
@@ -649,7 +651,7 @@ public class ArticleProcessor {
             final int articleVote = voteQueryService.isVoted(currentUserId, articleId);
             article.put(Article.ARTICLE_T_VOTE, articleVote);
 
-            if (currentUserId.equals(author.optString(Keys.OBJECT_ID))) {
+            if (isMyArticle) {
                 article.put(Common.REWARDED, true);
             } else {
                 article.put(Common.REWARDED, rewardQueryService.isRewarded(currentUserId, articleId, Reward.TYPE_C_ARTICLE));
@@ -707,7 +709,6 @@ public class ArticleProcessor {
         try {
             article.put(Common.THANKED, rewardQueryService.isRewarded(currentUserId, articleId, Reward.TYPE_C_THANK_ARTICLE));
             article.put(Common.THANKED_COUNT, article.optInt(Article.ARTICLE_THANK_CNT));
-            final String articleAuthorId = article.optString(Article.ARTICLE_AUTHOR_ID);
             if (Article.ARTICLE_TYPE_C_QNA == article.optInt(Article.ARTICLE_TYPE)) {
                 article.put(Common.OFFERED, rewardQueryService.isRewarded(articleAuthorId, articleId, Reward.TYPE_C_ACCEPT_COMMENT));
                 final JSONObject offeredComment = commentQueryService.getOfferedComment(cmtViewMode, articleId);
@@ -715,7 +716,7 @@ public class ArticleProcessor {
                 if (null != offeredComment) {
                     if (Comment.COMMENT_VISIBLE_C_AUTHOR == offeredComment.optInt(Comment.COMMENT_VISIBLE)) {
                         final String commentAuthorId = offeredComment.optString(Comment.COMMENT_AUTHOR_ID);
-                        if (!isLoggedIn || (!StringUtils.equals(currentUserId, commentAuthorId) && !StringUtils.equals(currentUserId, authorId))) {
+                        if (!isLoggedIn || (!StringUtils.equals(currentUserId, commentAuthorId) && !StringUtils.equals(currentUserId, articleAuthorId))) {
                             offeredComment.put(Comment.COMMENT_CONTENT, langPropsService.get("onlySelfAndArticleAuthorVisibleLabel"));
                         }
                     }
@@ -799,7 +800,7 @@ public class ArticleProcessor {
                 // https://github.com/b3log/symphony/issues/682
                 if (Comment.COMMENT_VISIBLE_C_AUTHOR == comment.optInt(Comment.COMMENT_VISIBLE)) {
                     final String commentAuthorId = comment.optString(Comment.COMMENT_AUTHOR_ID);
-                    if (!isLoggedIn || (!StringUtils.equals(currentUserId, commentAuthorId) && !StringUtils.equals(currentUserId, authorId))) {
+                    if (!isLoggedIn || (!StringUtils.equals(currentUserId, commentAuthorId) && !StringUtils.equals(currentUserId, articleAuthorId))) {
                         comment.put(Comment.COMMENT_CONTENT, langPropsService.get("onlySelfAndArticleAuthorVisibleLabel"));
                     }
                 }
@@ -834,7 +835,7 @@ public class ArticleProcessor {
                 // https://github.com/b3log/symphony/issues/682
                 if (Comment.COMMENT_VISIBLE_C_AUTHOR == comment.optInt(Comment.COMMENT_VISIBLE)) {
                     final String commentAuthorId = comment.optString(Comment.COMMENT_AUTHOR_ID);
-                    if (!isLoggedIn || (!StringUtils.equals(currentUserId, commentAuthorId) && !StringUtils.equals(currentUserId, authorId))) {
+                    if (!isLoggedIn || (!StringUtils.equals(currentUserId, commentAuthorId) && !StringUtils.equals(currentUserId, articleAuthorId))) {
                         comment.put(Comment.COMMENT_CONTENT, langPropsService.get("onlySelfAndArticleAuthorVisibleLabel"));
                     }
                 }
@@ -911,6 +912,7 @@ public class ArticleProcessor {
         final boolean isAnonymous = requestJSONObject.optBoolean(Article.ARTICLE_ANONYMOUS, false);
         final int articleAnonymous = isAnonymous ? Article.ARTICLE_ANONYMOUS_C_ANONYMOUS : Article.ARTICLE_ANONYMOUS_C_PUBLIC;
         final boolean articleNotifyFollowers = requestJSONObject.optBoolean(Article.ARTICLE_T_NOTIFY_FOLLOWERS);
+        final Integer articleShowInList = requestJSONObject.optInt(Article.ARTICLE_SHOW_IN_LIST, Article.ARTICLE_SHOW_IN_LIST_C_YES);
 
         final JSONObject article = new JSONObject();
         article.put(Article.ARTICLE_TITLE, articleTitle);
@@ -928,7 +930,7 @@ public class ArticleProcessor {
         article.put(Article.ARTICLE_UA, ua);
         article.put(Article.ARTICLE_ANONYMOUS, articleAnonymous);
         article.put(Article.ARTICLE_T_NOTIFY_FOLLOWERS, articleNotifyFollowers);
-
+        article.put(Article.ARTICLE_SHOW_IN_LIST, articleShowInList);
         try {
             final JSONObject currentUser = Sessions.getUser();
 
@@ -1080,7 +1082,7 @@ public class ArticleProcessor {
         final String ip = Requests.getRemoteAddr(request);
         final String ua = Headers.getHeader(request, Common.USER_AGENT, "");
         final boolean articleNotifyFollowers = requestJSONObject.optBoolean(Article.ARTICLE_T_NOTIFY_FOLLOWERS);
-
+        final Integer articleShowInList = requestJSONObject.optInt(Article.ARTICLE_SHOW_IN_LIST, Article.ARTICLE_SHOW_IN_LIST_C_YES);
         final JSONObject article = new JSONObject();
         article.put(Keys.OBJECT_ID, id);
         article.put(Article.ARTICLE_TITLE, articleTitle);
@@ -1097,7 +1099,7 @@ public class ArticleProcessor {
         }
         article.put(Article.ARTICLE_UA, ua);
         article.put(Article.ARTICLE_T_NOTIFY_FOLLOWERS, articleNotifyFollowers);
-
+        article.put(Article.ARTICLE_SHOW_IN_LIST, articleShowInList);
         final JSONObject currentUser = Sessions.getUser();
         if (null == currentUser
                 || !currentUser.optString(Keys.OBJECT_ID).equals(oldArticle.optString(Article.ARTICLE_AUTHOR_ID))) {

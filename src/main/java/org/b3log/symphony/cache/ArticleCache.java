@@ -46,7 +46,8 @@ import java.util.List;
  * Article cache.
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.3.1.1, Oct 23, 2018
+ * @author <a href="https://qiankunpingtai.cn">qiankunpingtai</a>
+ * @version 1.3.1.3, May 20, 2019
  * @since 1.4.0
  */
 @Singleton
@@ -110,15 +111,13 @@ public class ArticleCache {
             final Query query = new Query().addSort(Article.ARTICLE_COMMENT_CNT, SortDirection.DESCENDING).
                     addSort(Keys.OBJECT_ID, SortDirection.ASCENDING).
                     setPage(1, Symphonys.SIDE_HOT_ARTICLES_CNT);
-
             final List<Filter> filters = new ArrayList<>();
             filters.add(new PropertyFilter(Keys.OBJECT_ID, FilterOperator.GREATER_THAN_OR_EQUAL, id));
             filters.add(new PropertyFilter(Article.ARTICLE_TYPE, FilterOperator.NOT_EQUAL, Article.ARTICLE_TYPE_C_DISCUSSION));
             filters.add(new PropertyFilter(Article.ARTICLE_TAGS, FilterOperator.NOT_EQUAL, Tag.TAG_TITLE_C_SANDBOX));
-
+            filters.add(new PropertyFilter(Article.ARTICLE_SHOW_IN_LIST, FilterOperator.NOT_EQUAL, Article.ARTICLE_SHOW_IN_LIST_C_NOT));
             query.setFilter(new CompositeFilter(CompositeFilterOperator.AND, filters)).
                     select(Article.ARTICLE_TITLE, Article.ARTICLE_PERMALINK, Article.ARTICLE_AUTHOR_ID, Article.ARTICLE_ANONYMOUS);
-
             final JSONObject result = articleRepository.get(query);
             final List<JSONObject> articles = CollectionUtils.jsonArrayToList(result.optJSONArray(Keys.RESULTS));
             articleQueryService.organizeArticles(articles);
@@ -221,7 +220,9 @@ public class ArticleCache {
             final Query query = new Query().
                     addSort(Keys.OBJECT_ID, SortDirection.DESCENDING).
                     setPageCount(1).setPage(1, 36);
-            query.setFilter(new PropertyFilter(Article.ARTICLE_PERFECT, FilterOperator.EQUAL, Article.ARTICLE_PERFECT_C_PERFECT));
+            query.setFilter(CompositeFilterOperator.and(
+                    new PropertyFilter(Article.ARTICLE_PERFECT, FilterOperator.EQUAL, Article.ARTICLE_PERFECT_C_PERFECT),
+                    new PropertyFilter(Article.ARTICLE_SHOW_IN_LIST, FilterOperator.NOT_EQUAL, Article.ARTICLE_SHOW_IN_LIST_C_NOT)));
             query.select(Keys.OBJECT_ID,
                     Article.ARTICLE_STICK,
                     Article.ARTICLE_CREATE_TIME,
@@ -238,8 +239,8 @@ public class ArticleCache {
                     Article.ARTICLE_COMMENT_CNT,
                     Article.ARTICLE_ANONYMOUS,
                     Article.ARTICLE_PERFECT,
-                    Article.ARTICLE_QNA_OFFER_POINT);
-
+                    Article.ARTICLE_QNA_OFFER_POINT,
+                    Article.ARTICLE_SHOW_IN_LIST);
             final JSONObject result = articleRepository.get(query);
             final List<JSONObject> articles = CollectionUtils.jsonArrayToList(result.optJSONArray(Keys.RESULTS));
 

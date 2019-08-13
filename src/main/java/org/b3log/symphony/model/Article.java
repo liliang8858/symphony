@@ -24,7 +24,8 @@ import org.json.JSONObject;
  * This class defines all article model relevant keys.
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.34.0.1, Apr 9, 2019
+ * @author <a href="https://qiankunpingtai.cn">qiankunpingtai</a>
+ * @version 1.34.0.3, May 20, 2019
  * @since 0.2.0
  */
 public final class Article {
@@ -385,6 +386,11 @@ public final class Article {
      */
     public static final String ARTICLE_T_NOTIFY_FOLLOWERS = "articleNotifyFollowers";
 
+    /**
+     * Key of article show in list. https://github.com/b3log/symphony/issues/927
+     */
+    public static final String ARTICLE_SHOW_IN_LIST = "articleShowInList";
+
     // Anonymous constants
     /**
      * Article anonymous - public.
@@ -464,6 +470,17 @@ public final class Article {
      * Article type - <a href="https://github.com/b3log/symphony/issues/486">QnA</a>.
      */
     public static final int ARTICLE_TYPE_C_QNA = 5;
+
+    // Show in list constants
+    /**
+     * Article show in list - not.
+     */
+    public static final Integer ARTICLE_SHOW_IN_LIST_C_NOT = 0;
+
+    /**
+     * Article show in list - yes.
+     */
+    public static final Integer ARTICLE_SHOW_IN_LIST_C_YES = 1;
 
     /**
      * Checks the specified article1 is different from the specified article2.

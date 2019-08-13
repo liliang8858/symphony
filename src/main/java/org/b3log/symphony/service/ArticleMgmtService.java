@@ -53,7 +53,8 @@ import java.util.*;
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
  * @author <a href="http://zephyr.b3log.org">Zephyr</a>
- * @version 2.18.5.8, Apr 9, 2019
+ * @author <a href="https://qiankunpingtai.cn">qiankunpingtai</a>
+ * @version 2.18.5.11, Jun 6, 2019
  * @since 0.2.0
  */
 @Service
@@ -334,7 +335,7 @@ public class ArticleMgmtService {
                 final JSONObject toUpdate = articleRepository.get(articleId);
                 toUpdate.put(Article.ARTICLE_AUDIO_URL, audioURL);
                 final Transaction transaction = articleRepository.beginTransaction();
-                articleRepository.update(articleId, toUpdate);
+                articleRepository.update(articleId, toUpdate, Article.ARTICLE_AUDIO_URL);
                 transaction.commit();
                 LOGGER.debug("Generated article [id=" + articleId + "] audio");
             } catch (final Exception e) {
@@ -374,7 +375,7 @@ public class ArticleMgmtService {
                 articleCount = 0;
             }
             author.put(UserExt.USER_ARTICLE_COUNT, articleCount);
-            userRepository.update(author.optString(Keys.OBJECT_ID), author);
+            userRepository.update(author.optString(Keys.OBJECT_ID), author, UserExt.USER_ARTICLE_COUNT);
 
             final String city = article.optString(Article.ARTICLE_CITY);
             final String cityStatId = city + "-ArticleCount";
@@ -472,7 +473,7 @@ public class ArticleMgmtService {
                 article.put(Article.ARTICLE_VIEW_CNT, viewCnt + 1);
                 article.put(Article.ARTICLE_RANDOM_DOUBLE, Math.random());
 
-                articleRepository.update(articleId, article);
+                articleRepository.update(articleId, article, Article.ARTICLE_VIEW_CNT, Article.ARTICLE_RANDOM_DOUBLE);
 
                 transaction.commit();
             } catch (final RepositoryException e) {
@@ -694,7 +695,7 @@ public class ArticleMgmtService {
             article.put(Article.ARTICLE_UA, ua);
 
             article.put(Article.ARTICLE_STICK, 0L);
-
+            article.put(Article.ARTICLE_SHOW_IN_LIST, requestJSONObject.optInt(Article.ARTICLE_SHOW_IN_LIST, Article.ARTICLE_SHOW_IN_LIST_C_YES));
             final JSONObject articleCntOption = optionRepository.get(Option.ID_C_STATISTIC_ARTICLE_COUNT);
             final int articleCnt = articleCntOption.optInt(Option.OPTION_VALUE);
             articleCntOption.put(Option.OPTION_VALUE, articleCnt + 1);
@@ -900,7 +901,7 @@ public class ArticleMgmtService {
             articleToUpdate.put(Article.ARTICLE_TAGS, requestJSONObject.optString(Article.ARTICLE_TAGS));
             articleToUpdate.put(Article.ARTICLE_COMMENTABLE, requestJSONObject.optBoolean(Article.ARTICLE_COMMENTABLE, true));
             articleToUpdate.put(Article.ARTICLE_TYPE, articleType);
-
+            articleToUpdate.put(Article.ARTICLE_SHOW_IN_LIST, requestJSONObject.optInt(Article.ARTICLE_SHOW_IN_LIST, Article.ARTICLE_SHOW_IN_LIST_C_YES));
             String articleContent = requestJSONObject.optString(Article.ARTICLE_CONTENT);
             articleContent = Emotions.toAliases(articleContent);
             //articleContent = StringUtils.trim(articleContent) + " "; https://github.com/b3log/symphony/issues/389
@@ -1170,7 +1171,6 @@ public class ArticleMgmtService {
     public void thank(final String articleId, final String senderId) throws ServiceException {
         try {
             final JSONObject article = articleRepository.get(articleId);
-
             if (null == article) {
                 return;
             }
@@ -1221,7 +1221,7 @@ public class ArticleMgmtService {
             final int thankCnt = article.optInt(Article.ARTICLE_THANK_CNT);
             article.put(Article.ARTICLE_THANK_CNT, thankCnt + 1);
             final Transaction transaction = articleRepository.beginTransaction();
-            articleRepository.update(articleId, article);
+            articleRepository.update(articleId, article, Article.ARTICLE_THANK_CNT);
             transaction.commit();
 
             final JSONObject reward = new JSONObject();
@@ -1284,7 +1284,7 @@ public class ArticleMgmtService {
 
             article.put(Article.ARTICLE_STICK, System.currentTimeMillis());
 
-            articleRepository.update(articleId, article);
+            articleRepository.update(articleId, article, Article.ARTICLE_STICK);
 
             transaction.commit();
 
@@ -1320,7 +1320,7 @@ public class ArticleMgmtService {
 
             article.put(Article.ARTICLE_STICK, Long.MAX_VALUE);
 
-            articleRepository.update(articleId, article);
+            articleRepository.update(articleId, article, Article.ARTICLE_STICK);
         } catch (final RepositoryException e) {
             LOGGER.log(Level.ERROR, "Admin sticks an article[id=" + articleId + "] failed", e);
         }
@@ -1341,7 +1341,7 @@ public class ArticleMgmtService {
 
             article.put(Article.ARTICLE_STICK, 0L);
 
-            articleRepository.update(articleId, article);
+            articleRepository.update(articleId, article, Article.ARTICLE_STICK);
         } catch (final RepositoryException e) {
             LOGGER.log(Level.ERROR, "Admin cancel sticks an article[id=" + articleId + "] failed", e);
         }
@@ -1376,7 +1376,7 @@ public class ArticleMgmtService {
 
                 if (expired < now) {
                     article.put(Article.ARTICLE_STICK, 0L);
-                    articleRepository.update(article.optString(Keys.OBJECT_ID), article);
+                    articleRepository.update(article.optString(Keys.OBJECT_ID), article, Article.ARTICLE_STICK);
                 }
             }
         } catch (final RepositoryException e) {
@@ -1783,7 +1783,7 @@ public class ArticleMgmtService {
             article.put(Article.ARTICLE_PERFECT, Article.ARTICLE_PERFECT_C_NOT_PERFECT);
             article.put(Article.ARTICLE_ANONYMOUS_VIEW, Article.ARTICLE_ANONYMOUS_VIEW_C_USE_GLOBAL);
             article.put(Article.ARTICLE_AUDIO_URL, "");
-
+            article.put(Article.ARTICLE_SHOW_IN_LIST, requestJSONObject.optInt(Article.ARTICLE_SHOW_IN_LIST, Article.ARTICLE_SHOW_IN_LIST_C_YES));
             final JSONObject articleCntOption = optionRepository.get(Option.ID_C_STATISTIC_ARTICLE_COUNT);
             final int articleCnt = articleCntOption.optInt(Option.OPTION_VALUE);
             articleCntOption.put(Option.OPTION_VALUE, articleCnt + 1);
